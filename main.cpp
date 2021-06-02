@@ -22,26 +22,18 @@
     }
 
 using namespace std;
+using namespace std::chrono;
 
-// TODO Wyswietl punkt w miejscu gdzie kliknieto myszka
+// TODO Wyswietl punkt w miejscu gdzie kliknieto myszka  <- jest
 // TODO Prosta animacja punktu sterowanego klawiatura
 // TODO Drugi punkt sterowany WSAD-em
 
-void mousePress(SDL_MouseButtonEvent &b)
-{
-    if (b.button == SDL_BUTTON_LEFT)
-    {
-        cout << "Left click" << endl;
-    }
-}
-
 int main(int, char **)
 {
-    using namespace std;
-    using namespace std::chrono;
     const int width = 640;
     const int height = 480;
     int xMouse, yMouse;
+    const unsigned int speed = 15;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
@@ -60,6 +52,14 @@ int main(int, char **)
 
     //auto dt = 15ms;
     milliseconds dt(15);
+
+    // draw two players
+    SDL_Rect playerRect = {50, 50, 50, 50};
+    SDL_Rect playerRect2 = {250, 50, 50, 50};
+    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0x0, 0xFF);
+    SDL_RenderFillRect(renderer, &playerRect);
+    SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0xFF, 0xFF);
+    SDL_RenderFillRect(renderer, &playerRect2);
 
     steady_clock::time_point current_time = steady_clock::now(); // remember current time
     for (bool game_active = true; game_active;)
@@ -80,6 +80,10 @@ int main(int, char **)
                 {
                 case SDLK_UP:
                     cout << "Up" << endl;
+
+                    playerRect.y = playerRect.y - speed;
+                    SDL_RenderFillRect(renderer, &playerRect);
+
                     break;
                 case SDLK_DOWN:
                     cout << "Down" << endl;
@@ -91,22 +95,22 @@ int main(int, char **)
                     cout << "Right" << endl;
                     break;
                 }
+
+                // draw();
             }
 
             // mouse events
-            if (event.type == SDL_MOUSEMOTION)
-            { 
-                SDL_GetGlobalMouseState(&xMouse, &yMouse);  // save mouse position to variables
-            }
+            // if (event.type == SDL_MOUSEMOTION)
+            // { 
+            //     SDL_GetGlobalMouseState(&xMouse, &yMouse);  // save mouse position to variables
+            // }
             if (event.type == SDL_MOUSEMOTION && event.button.button == SDL_BUTTON(SDL_BUTTON_LEFT))
             {
                 cout << "Left mouse button" << endl;
 
+                SDL_GetMouseState(&xMouse, &yMouse);
                 SDL_SetRenderDrawColor(renderer, 0xFF, 0x0, 0x0, 0xFF);
                 SDL_RenderDrawPoint(renderer, xMouse, yMouse);
-                
-                cout<<"xMouse: "<<xMouse<<endl;
-                cout<<"yMouse: "<<yMouse<<endl;
             }
             if (event.type == SDL_MOUSEMOTION && event.button.button == SDL_BUTTON(SDL_BUTTON_RIGHT))
             {
