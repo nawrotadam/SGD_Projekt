@@ -10,30 +10,39 @@
 #include <tuple>
 #include <vector>
 
-// check for errors
-#define errcheck(e)                         \
-    {                                       \
-        if (e)                              \
-        {                                   \
-            cout << SDL_GetError() << endl; \
-            SDL_Quit();                     \
-            return -1;                      \
-        }                                   \
-    }
-
 using namespace std;
 using namespace std::chrono;
 
-// TODO Wyswietl punkt w miejscu gdzie kliknieto myszka  <- jest
+// check for errors
+#define errcheck(e)                                                            \
+  {                                                                            \
+    if (e) {                                                                   \
+      cout << SDL_GetError() << endl;                                          \
+      SDL_Quit();                                                              \
+      return -1;                                                               \
+    }                                                                          \
+  }
+
 // TODO Prosta animacja punktu sterowanego klawiatura
 // TODO Drugi punkt sterowany WSAD-em
 
+const int width = 640;
+const int height = 480;
+const int playerWidth = 50;
+const int playerHeight = 50;
+
+void drawPlayers(SDL_Renderer &renderer, SDL_Rect playerRect, SDL_Rect playerRect2)
+{
+    SDL_SetRenderDrawColor(&renderer, 0xFF, 0xFF, 0x0, 0xFF);
+    SDL_RenderFillRect(&renderer, &playerRect);
+    SDL_SetRenderDrawColor(&renderer, 0x0, 0x0, 0xFF, 0xFF);
+    SDL_RenderFillRect(&renderer, &playerRect2);
+}
+
 int main(int, char **)
 {
-    const int width = 640;
-    const int height = 480;
     int xMouse, yMouse;
-    const unsigned int speed = 15;
+    unsigned int speed = 15;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
@@ -54,12 +63,9 @@ int main(int, char **)
     milliseconds dt(15);
 
     // draw two players
-    SDL_Rect playerRect = {50, 50, 50, 50};
-    SDL_Rect playerRect2 = {250, 50, 50, 50};
-    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0x0, 0xFF);
-    SDL_RenderFillRect(renderer, &playerRect);
-    SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0xFF, 0xFF);
-    SDL_RenderFillRect(renderer, &playerRect2);
+    SDL_Rect playerRect = {50, 50, playerWidth, playerHeight};
+    SDL_Rect playerRect2 = {250, 50, playerWidth, playerHeight};
+    drawPlayers(*renderer, playerRect, playerRect2);
 
     steady_clock::time_point current_time = steady_clock::now(); // remember current time
     for (bool game_active = true; game_active;)
@@ -80,23 +86,43 @@ int main(int, char **)
                 {
                 case SDLK_UP:
                     cout << "Up" << endl;
-
-                    playerRect.y = playerRect.y - speed;
-                    SDL_RenderFillRect(renderer, &playerRect);
-
+                    playerRect2.y -= speed;
                     break;
                 case SDLK_DOWN:
                     cout << "Down" << endl;
+                    playerRect2.y += speed;
                     break;
                 case SDLK_LEFT:
                     cout << "Left" << endl;
+                    playerRect2.x -= speed;
                     break;
                 case SDLK_RIGHT:
                     cout << "Right" << endl;
+                    playerRect2.x += speed;
+                    break;
+                case SDLK_w:
+                    cout << "W" << endl;
+                    playerRect.y -= speed;
+                    break;
+                case SDLK_s:
+                    cout << "S" << endl;
+                    playerRect.y += speed;
+                    break;
+                case SDLK_a:
+                    cout << "A" << endl;
+                    playerRect.x -= speed;
+                    break;
+                case SDLK_d:
+                    cout << "D" << endl;
+                    playerRect.x += speed;
                     break;
                 }
 
-                // draw();
+                // clear map
+                SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+                SDL_RenderClear(renderer);
+
+                drawPlayers(*renderer, playerRect, playerRect2);
             }
 
             // mouse events
