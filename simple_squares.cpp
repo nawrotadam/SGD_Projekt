@@ -25,10 +25,21 @@ using namespace std::chrono;
 
 const int width = 640;
 const int height = 480;
+const int playerWidth = 50;
+const int playerHeight = 50;
+
+void drawPlayers(SDL_Renderer &renderer, SDL_Rect playerRect, SDL_Rect playerRect2)
+{
+    SDL_SetRenderDrawColor(&renderer, 0xFF, 0xFF, 0x0, 0xFF);
+    SDL_RenderFillRect(&renderer, &playerRect);
+    SDL_SetRenderDrawColor(&renderer, 0x0, 0x0, 0xFF, 0xFF);
+    SDL_RenderFillRect(&renderer, &playerRect2);
+}
 
 int main(int, char **)
 {
     int xMouse, yMouse;
+    unsigned int speed = 15;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
@@ -47,6 +58,11 @@ int main(int, char **)
 
     //auto dt = 15ms;
     milliseconds dt(15);
+
+    // draw two players
+    SDL_Rect playerRect = {50, 50, playerWidth, playerHeight};
+    SDL_Rect playerRect2 = {250, 50, playerWidth, playerHeight};
+    drawPlayers(*renderer, playerRect, playerRect2);
 
     steady_clock::time_point current_time = steady_clock::now(); // remember current time
     for (bool game_active = true; game_active;)
@@ -67,39 +83,53 @@ int main(int, char **)
                 {
                 case SDLK_UP:
                     cout << "Up" << endl;
+                    playerRect2.y -= speed;
                     break;
                 case SDLK_DOWN:
                     cout << "Down" << endl;
+                    playerRect2.y += speed;
                     break;
                 case SDLK_LEFT:
                     cout << "Left" << endl;
+                    playerRect2.x -= speed;
                     break;
                 case SDLK_RIGHT:
                     cout << "Right" << endl;
+                    playerRect2.x += speed;
                     break;
                 case SDLK_w:
                     cout << "W" << endl;
+                    playerRect.y -= speed;
                     break;
                 case SDLK_s:
                     cout << "S" << endl;
+                    playerRect.y += speed;
                     break;
                 case SDLK_a:
                     cout << "A" << endl;
+                    playerRect.x -= speed;
                     break;
                 case SDLK_d:
                     cout << "D" << endl;
+                    playerRect.x += speed;
                     break;
                 }
 
                 // clear map
                 SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
                 SDL_RenderClear(renderer);
+
+                drawPlayers(*renderer, playerRect, playerRect2);
             }
 
             // mouse events
             if (event.type == SDL_MOUSEMOTION && event.button.button == SDL_BUTTON(SDL_BUTTON_LEFT))
             {
                 cout << "Left mouse button" << endl;
+
+                SDL_GetMouseState(&xMouse, &yMouse);  // save mouse position to variables
+                SDL_SetRenderDrawColor(renderer, 0xFF, 0x0, 0x0, 0xFF);
+                SDL_RenderDrawPoint(renderer, xMouse, yMouse);
             }
             if (event.type == SDL_MOUSEMOTION && event.button.button == SDL_BUTTON(SDL_BUTTON_RIGHT))
             {
