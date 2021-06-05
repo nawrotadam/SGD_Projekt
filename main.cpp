@@ -84,12 +84,11 @@ SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
     return p;
 }
 
-void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonPosition, int angle)
+void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonStandPosition, SDL_Point cannonBarrelPosition, int angle)
 {
-    SDL_Point cannon_starting_point = {250, 250};  // first point of cannon line
-    SDL_Point cannon_rotated_point = rotate_point(cannon_starting_point.x, cannon_starting_point.y, angle, cannonPosition);  // point rotated by certain angle
+    SDL_Point cannon_rotated_point = rotate_point(cannonBarrelPosition.x, cannonBarrelPosition.y, angle, cannonStandPosition);  // point rotated by certain angle
     SDL_SetRenderDrawColor(&renderer, 0, 255, 0, 255);  
-    SDL_RenderDrawLine(&renderer, cannon_starting_point.x, cannon_starting_point.y, cannon_rotated_point.x, cannon_rotated_point.y);  
+    SDL_RenderDrawLine(&renderer, cannonBarrelPosition.x, cannonBarrelPosition.y, cannon_rotated_point.x, cannon_rotated_point.y);  
 }
 
 void draw_bullets(SDL_Renderer &renderer, vector<Bullet> activeBullets)
@@ -125,7 +124,8 @@ int main(int, char **)
 {
     int xMouse, yMouse;
     int angle = 0;
-    SDL_Point cannonPosition = {150, 150};
+    SDL_Point cannonStandPosition = {150, 150};  // starting point of cannon line
+    SDL_Point cannonBarrelPosition = {250, 250};  // end point of cannon line
     vector<Bullet> activeBullets;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
@@ -144,7 +144,7 @@ int main(int, char **)
     SDL_RenderClear(renderer);
 
     // draw cannon
-    draw_cannon(*renderer, cannonPosition, angle);
+    draw_cannon(*renderer, cannonStandPosition, cannonBarrelPosition, angle);
 
     //auto dt = 15ms;
     milliseconds dt(15);
@@ -194,7 +194,8 @@ int main(int, char **)
                     break;
                 case SDLK_SPACE:
                     cout << "Space" << endl;
-                    activeBullets.push_back(shootBullet(cannonPosition, renderer));  // shoots bullet and saves it to active bullets
+                    SDL_Point initialBulletPosition = rotate_point(cannonBarrelPosition.x, cannonBarrelPosition.y, angle, cannonStandPosition);
+                    activeBullets.push_back(shootBullet(initialBulletPosition, renderer));  // shoots bullet and saves it to active bullets
                     cout << "Active bullets: "<< activeBullets.size() <<endl;
                     break;
                 }
@@ -204,7 +205,7 @@ int main(int, char **)
                 SDL_RenderClear(renderer);
 
                 // draw objects
-                draw_cannon(*renderer, cannonPosition, angle);
+                draw_cannon(*renderer, cannonStandPosition, cannonBarrelPosition, angle);
                 draw_bullets(*renderer, activeBullets);
                 
                 angle = angleLimiter(angle);
