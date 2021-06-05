@@ -26,6 +26,42 @@ using namespace std::chrono;
 const int width = 640;
 const int height = 480;
 
+class Bullet {
+private:
+    SDL_Point position;
+    double dx, dy;  // velocity
+public:
+    Bullet(SDL_Point position, double dx, double dy, SDL_Renderer *renderer) {
+        this->position = position;
+        this->dx = dx;
+        this->dy = dy;
+    }
+
+    SDL_Point getPosition() {
+        return position;
+    }
+
+    void setPosition(SDL_Point position) {
+        this->position = position;
+    }
+
+    double getVelocityX() {
+        return dx;
+    }
+
+    double setVelocityX(double dx) {
+        this->dx = dx;
+    }
+
+    double getVelocityY() {
+        return dy;
+    }
+
+    double setVelocityY(double dy) {
+        this->dy = dy;
+    }
+};
+
 SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
 {
     double pi = acos(-1);
@@ -56,6 +92,17 @@ void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonPosition, int angle)
     SDL_RenderDrawLine(&renderer, cannon_starting_point.x, cannon_starting_point.y, cannon_rotated_point.x, cannon_rotated_point.y);  
 }
 
+void draw_bullets(SDL_Renderer &renderer, vector<Bullet> activeBullets)
+{
+    cout<<"Bullets drawn"<<endl;
+
+    SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);
+    for (Bullet b : activeBullets)
+    {
+        SDL_RenderDrawPoint(&renderer, b.getPosition().x, b.getPosition().y);
+    }
+}
+
 int angleLimiter(int angle)  // limits angle to value from 0 to 360
 {
     if (angle > 360 || angle < 0) {
@@ -64,11 +111,22 @@ int angleLimiter(int angle)  // limits angle to value from 0 to 360
     return angle;
 }
 
+Bullet shootBullet(SDL_Point initialPoint, SDL_Renderer *renderer)
+{
+    cout<<"Bullet shooted"<<endl;
+
+    double dx = 10;
+    double dy = 5;
+    Bullet newBullet(initialPoint, dx, dy, renderer);
+    return newBullet;
+}
+
 int main(int, char **)
 {
     int xMouse, yMouse;
     int angle = 0;
     SDL_Point cannonPosition = {150, 150};
+    vector<Bullet> activeBullets;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
@@ -136,6 +194,8 @@ int main(int, char **)
                     break;
                 case SDLK_SPACE:
                     cout << "Space" << endl;
+                    activeBullets.push_back(shootBullet(cannonPosition, renderer));  // shoots bullet and saves it to active bullets
+                    cout << "Active bullets: "<< activeBullets.size() <<endl;
                     break;
                 }
 
@@ -143,8 +203,9 @@ int main(int, char **)
                 SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
                 SDL_RenderClear(renderer);
 
-                // draw cannon
+                // draw objects
                 draw_cannon(*renderer, cannonPosition, angle);
+                draw_bullets(*renderer, activeBullets);
                 
                 angle = angleLimiter(angle);
             }
