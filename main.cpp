@@ -26,9 +26,49 @@ using namespace std::chrono;
 const int width = 640;
 const int height = 480;
 
+SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
+{
+    double pi = acos(-1);
+    double rotation_angle = (double)angle / 180.0 * pi;
+    double s = sin(rotation_angle);
+    double c = cos(rotation_angle);
+
+    // translate point back to origin:
+    p.x -= cx;
+    p.y -= cy;
+
+    // rotate point
+    double xnew = p.x * c - p.y * s;
+    double ynew = p.x * s + p.y * c;
+
+    // translate point back:
+    p.x = xnew + cx;
+    p.y = ynew + cy;
+
+    return p;
+}
+
+void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonPosition, int angle)
+{
+    SDL_Point cannon_starting_point = {250, 250};  // first point of cannon line
+    SDL_Point cannon_rotated_point = rotate_point(cannon_starting_point.x, cannon_starting_point.y, angle, cannonPosition);  // point rotated by certain angle
+    SDL_SetRenderDrawColor(&renderer, 0, 255, 0, 255);  
+    SDL_RenderDrawLine(&renderer, cannon_starting_point.x, cannon_starting_point.y, cannon_rotated_point.x, cannon_rotated_point.y);  
+}
+
+int angleLimiter(int angle)  // limits angle to value from 0 to 360
+{
+    if (angle > 360 || angle < 0) {
+        angle = 0;
+    }
+    return angle;
+}
+
 int main(int, char **)
 {
     int xMouse, yMouse;
+    int angle = 0;
+    SDL_Point cannonPosition = {150, 150};
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
@@ -44,6 +84,9 @@ int main(int, char **)
     // change background color
     SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
     SDL_RenderClear(renderer);
+
+    // draw cannon
+    draw_cannon(*renderer, cannonPosition, angle);
 
     //auto dt = 15ms;
     milliseconds dt(15);
@@ -67,9 +110,11 @@ int main(int, char **)
                 {
                 case SDLK_UP:
                     cout << "Up" << endl;
+                    angle++;
                     break;
                 case SDLK_DOWN:
                     cout << "Down" << endl;
+                    angle--;
                     break;
                 case SDLK_LEFT:
                     cout << "Left" << endl;
@@ -89,11 +134,19 @@ int main(int, char **)
                 case SDLK_d:
                     cout << "D" << endl;
                     break;
+                case SDLK_SPACE:
+                    cout << "Space" << endl;
+                    break;
                 }
 
                 // clear map
                 SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
                 SDL_RenderClear(renderer);
+
+                // draw cannon
+                draw_cannon(*renderer, cannonPosition, angle);
+                
+                angle = angleLimiter(angle);
             }
 
             // mouse events
