@@ -90,9 +90,9 @@ SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
 
 void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonStandPosition, SDL_Point cannonBarrelPosition, int angle)
 {
-    SDL_Point cannon_rotated_point = rotate_point(cannonBarrelPosition.x, cannonBarrelPosition.y, angle, cannonStandPosition);  // point rotated by certain angle
+    SDL_Point cannon_rotated_point = rotate_point(cannonStandPosition.x, cannonStandPosition.y, angle, cannonBarrelPosition);  // point rotated by certain angle
     SDL_SetRenderDrawColor(&renderer, 0, 255, 0, 255);  
-    SDL_RenderDrawLine(&renderer, cannonBarrelPosition.x, cannonBarrelPosition.y, cannon_rotated_point.x, cannon_rotated_point.y);  
+    SDL_RenderDrawLine(&renderer, cannonStandPosition.x, cannonStandPosition.y, cannon_rotated_point.x, cannon_rotated_point.y);  
 }
 
 void draw_bullets(SDL_Renderer &renderer, vector<Bullet> activeBullets)
@@ -150,8 +150,8 @@ int main(int, char **)
 {
     int xMouse, yMouse;
     int angle = 0;
-    SDL_Point cannonStandPosition = {150, 150};  // starting point of cannon line
-    SDL_Point cannonBarrelPosition = {250, 250};  // end point of cannon line
+    SDL_Point cannonStandPosition = {250, 250};  // starting point of cannon line
+    SDL_Point cannonBarrelPosition = {150, 150};  // end point of cannon line
     vector<Bullet> activeBullets;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
@@ -220,7 +220,7 @@ int main(int, char **)
                     break;
                 case SDLK_SPACE:
                     cout << "Space" << endl;
-                    SDL_Point initialBulletPosition = rotate_point(cannonBarrelPosition.x, cannonBarrelPosition.y, angle, cannonStandPosition);
+                    SDL_Point initialBulletPosition = rotate_point(cannonStandPosition.x, cannonStandPosition.y, angle, cannonBarrelPosition);
                     activeBullets.push_back(shootBullet(initialBulletPosition, renderer));  // shoots bullet and saves it to active bullets
                     cout << "Active bullets: "<< activeBullets.size() <<endl;
                     break;
