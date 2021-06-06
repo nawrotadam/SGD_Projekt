@@ -26,6 +26,46 @@ using namespace std::chrono;
 const int width = 640;
 const int height = 480;
 
+class Bullet {
+private:
+    SDL_Point position;
+    double dx, dy;  // velocity
+public:
+    Bullet(SDL_Point position, double dx, double dy, SDL_Renderer *renderer) {
+        this->position = position;
+        this->dx = dx;
+        this->dy = dy;
+    }
+
+    void Update() {
+
+    }
+
+    SDL_Point getPosition() {
+        return position;
+    }
+
+    void setPosition(SDL_Point position) {
+        this->position = position;
+    }
+
+    double getVelocityX() {
+        return dx;
+    }
+
+    double setVelocityX(double dx) {
+        this->dx = dx;
+    }
+
+    double getVelocityY() {
+        return dy;
+    }
+
+    double setVelocityY(double dy) {
+        this->dy = dy;
+    }
+};
+
 SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
 {
     double pi = acos(-1);
@@ -48,9 +88,74 @@ SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
     return p;
 }
 
+void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonStandPosition, SDL_Point cannonBarrelPosition, int angle)
+{
+    SDL_Point cannon_rotated_point = rotate_point(cannonStandPosition.x, cannonStandPosition.y, angle, cannonBarrelPosition);  // point rotated by certain angle
+    SDL_SetRenderDrawColor(&renderer, 0, 255, 0, 255);  
+    SDL_RenderDrawLine(&renderer, cannonStandPosition.x, cannonStandPosition.y, cannon_rotated_point.x, cannon_rotated_point.y);  
+}
+
+void draw_bullets(SDL_Renderer &renderer, vector<Bullet> activeBullets)
+{
+    SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);
+    for (Bullet b : activeBullets)
+    {
+        SDL_RenderDrawPoint(&renderer, b.getPosition().x, b.getPosition().y);
+    }
+}
+
+void update_bullets(vector<Bullet> &activeBullets)  // simple bullets physics
+{
+    for (Bullet &b : activeBullets)
+    {
+        SDL_Point pos = b.getPosition();
+
+
+
+        SDL_Point newPos = {int(pos.x), int(pos.y + b.getVelocityY())};
+        b.setPosition(newPos);
+
+        cout << "X: "<<newPos.x<<" Y: "<<newPos.y<<endl;
+    }
+}
+
+void delete_non_active_bullets(vector<Bullet> &activeBullets)
+{
+    int counter = 0;
+    for (Bullet &b : activeBullets)
+    {
+        auto pos = b.getPosition();
+        if (pos.x < 0 || pos.x > width || pos.y < 0 || pos.y > height)  // bullet is out of the screen
+        {
+            activeBullets.erase(activeBullets.begin() + counter);
+        }
+        counter++;
+    }
+}
+
+int angleLimiter(int angle)  // limits angle to value from 0 to 360
+{
+    if (angle > 360 || angle < 0) {
+        angle = 0;
+    }
+    return angle;
+}
+
+Bullet shootBullet(SDL_Point initialPoint, SDL_Renderer *renderer)
+{
+    double dx = 10;
+    double dy = 5;
+    Bullet newBullet(initialPoint, dx, dy, renderer);
+    return newBullet;
+}
+
 int main(int, char **)
 {
     int xMouse, yMouse;
+    int angle = 0;
+    SDL_Point cannonStandPosition = {250, 250};  // starting point of cannon line
+    SDL_Point cannonBarrelPosition = {150, 150};  // end point of cannon line
+    vector<Bullet> activeBullets;
 
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
@@ -66,6 +171,9 @@ int main(int, char **)
     // change background color
     SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
     SDL_RenderClear(renderer);
+
+    // draw cannon
+    draw_cannon(*renderer, cannonStandPosition, cannonBarrelPosition, angle);
 
     //auto dt = 15ms;
     milliseconds dt(15);
@@ -89,9 +197,11 @@ int main(int, char **)
                 {
                 case SDLK_UP:
                     cout << "Up" << endl;
+                    angle++;
                     break;
                 case SDLK_DOWN:
                     cout << "Down" << endl;
+                    angle--;
                     break;
                 case SDLK_LEFT:
                     cout << "Left" << endl;
@@ -113,12 +223,26 @@ int main(int, char **)
                     break;
                 case SDLK_SPACE:
                     cout << "Space" << endl;
+                    SDL_Point initialBulletPosition = rotate_point(cannonStandPosition.x, cannonStandPosition.y, angle, cannonBarrelPosition);
+                    activeBullets.push_back(shootBullet(initialBulletPosition, renderer));  // shoots bullet and saves it to active bullets
+                    cout << "Active bullets: "<< activeBullets.size() <<endl;
                     break;
                 }
 
                 // clear map
                 SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
                 SDL_RenderClear(renderer);
+
+                // draw objects
+                draw_cannon(*renderer, cannonStandPosition, cannonBarrelPosition, angle);
+                draw_bullets(*renderer, activeBullets);
+
+                // apply physics to bullets
+                update_bullets(activeBullets);
+                delete_non_active_bullets(activeBullets);
+                
+                // limit angle to values from 0 to 360
+                angle = angleLimiter(angle);
             }
 
             // mouse events
