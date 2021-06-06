@@ -12,3 +12,6 @@ generate_cannon:
 
 install_sdl2:
 	sudo apt-get install libsdl2-dev
+
+clean:
+	rm *.out
