@@ -37,6 +37,10 @@ public:
         this->dy = dy;
     }
 
+    void Update() {
+
+    }
+
     SDL_Point getPosition() {
         return position;
     }
@@ -93,12 +97,36 @@ void draw_cannon(SDL_Renderer &renderer, SDL_Point cannonStandPosition, SDL_Poin
 
 void draw_bullets(SDL_Renderer &renderer, vector<Bullet> activeBullets)
 {
-    cout<<"Bullets drawn"<<endl;
-
     SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);
     for (Bullet b : activeBullets)
     {
         SDL_RenderDrawPoint(&renderer, b.getPosition().x, b.getPosition().y);
+    }
+}
+
+void update_bullets(vector<Bullet> &activeBullets)  // simple bullets physics
+{
+    for (Bullet &b : activeBullets)
+    {
+        SDL_Point pos = b.getPosition();
+        SDL_Point newPos = {pos.x, pos.y + 1};
+        b.setPosition(newPos);
+
+        cout << "X: "<<newPos.x<<" Y: "<<newPos.y<<endl;
+    }
+}
+
+void delete_non_active_bullets(vector<Bullet> &activeBullets)
+{
+    int counter = 0;
+    for (Bullet &b : activeBullets)
+    {
+        auto pos = b.getPosition();
+        if (pos.x < 0 || pos.x > width || pos.y < 0 || pos.y > height)  // bullet is out of the screen
+        {
+            activeBullets.erase(activeBullets.begin() + counter);
+        }
+        counter++;
     }
 }
 
@@ -112,8 +140,6 @@ int angleLimiter(int angle)  // limits angle to value from 0 to 360
 
 Bullet shootBullet(SDL_Point initialPoint, SDL_Renderer *renderer)
 {
-    cout<<"Bullet shooted"<<endl;
-
     double dx = 10;
     double dy = 5;
     Bullet newBullet(initialPoint, dx, dy, renderer);
@@ -153,8 +179,8 @@ int main(int, char **)
     for (bool game_active = true; game_active;)
     {
         SDL_Event event;
-        while (SDL_PollEvent(&event))
-        { // check if there are some events
+        while (SDL_PollEvent(&event))  // check if there are some events
+        {
             // quit game
             if (event.type == SDL_QUIT)
             {
@@ -207,7 +233,12 @@ int main(int, char **)
                 // draw objects
                 draw_cannon(*renderer, cannonStandPosition, cannonBarrelPosition, angle);
                 draw_bullets(*renderer, activeBullets);
+
+                // apply physics to bullets
+                update_bullets(activeBullets);
+                delete_non_active_bullets(activeBullets);
                 
+                // limit angle to values from 0 to 360
                 angle = angleLimiter(angle);
             }
 
