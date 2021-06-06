@@ -23,8 +23,44 @@ using namespace std::chrono;
     }                                                                          \
   }
 
-const int width = 640;
-const int height = 480;
+const int width = 680;
+const int height = 460;
+
+class Ship {
+private:
+    SDL_Point position;
+    float dx, dy;  // velocity
+public:
+    Ship(SDL_Point position, double dx, double dy) {
+        this->position = position;
+        this->dx = dx;
+        this->dy = dy;
+    }
+
+    SDL_Point getPosition() {
+        return position;
+    }
+
+    void setPosition(SDL_Point position) {
+        this->position = position;
+    }
+
+    double getVelocityX() {
+        return dx;
+    }
+
+    double setVelocityX(double dx) {
+        this->dx = dx;
+    }
+
+    double getVelocityY() {
+        return dy;
+    }
+
+    double setVelocityY(double dy) {
+        this->dy = dy;
+    }
+};
 
 SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
 {
@@ -55,7 +91,7 @@ int main(int, char **)
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
 
     SDL_Window *window = SDL_CreateWindow(
-        "My Next Superawesome Game", SDL_WINDOWPOS_UNDEFINED,
+        "Ship game", SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
     errcheck(window == nullptr);
 
