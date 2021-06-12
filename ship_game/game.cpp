@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h> // TODO to nie dziala
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -99,9 +100,14 @@ int main(int, char **)
         window, -1, SDL_RENDERER_ACCELERATED); // SDL_RENDERER_PRESENTVSYNC
     errcheck(renderer == nullptr);
 
-    // change background color
-    SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-    SDL_RenderClear(renderer);
+    // initialize sea texture
+    SDL_Surface* temp_surface = IMG_Load("ship_game/textures/sea.png");
+    SDL_Texture* sea_texture = SDL_CreateTextureFromSurface(renderer, temp_surface);
+    SDL_FreeSurface(temp_surface);
+
+    // draw initial frame of sea texture
+    SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
 
     //auto dt = 15ms;
     milliseconds dt(15);
@@ -152,9 +158,17 @@ int main(int, char **)
                     break;
                 }
 
+                // draw sea texture
+                SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
+                SDL_RenderPresent(renderer);
+
+
+                // clean up unused assets
+                // SDL_DestroyTexture(sea_texture);
+
                 // clear map
-                SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-                SDL_RenderClear(renderer);
+                // SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+                // SDL_RenderClear(renderer);
             }
 
             // mouse events
@@ -167,6 +181,8 @@ int main(int, char **)
                 cout << "Right mouse button" << endl;
             }
         }
+
+        // SDL_RenderCopy(renderer, sea_texture, NULL, &sea_destination);
 
         SDL_RenderPresent(renderer); // draw frame to screen
 
