@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h> // TODO to nie dziala
+#include <SDL2/SDL_image.h>
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -26,6 +26,8 @@ using namespace std::chrono;
 
 const int width = 680;
 const int height = 460;
+const char* SEA_PATH = "ship_game/textures/sea.png";
+const char* SHIP_PATH = "ship_game/textures/ship.png";
 
 class Ship {
 private:
@@ -101,12 +103,28 @@ int main(int, char **)
     errcheck(renderer == nullptr);
 
     // initialize sea texture
-    SDL_Surface* temp_surface = IMG_Load("ship_game/textures/sea.png");
-    SDL_Texture* sea_texture = SDL_CreateTextureFromSurface(renderer, temp_surface);
-    SDL_FreeSurface(temp_surface);
+    SDL_Surface* temp_sea_surface = IMG_Load(SEA_PATH);
+    SDL_Texture* sea_texture = SDL_CreateTextureFromSurface(renderer, temp_sea_surface);
+    SDL_FreeSurface(temp_sea_surface);
+
+    // initialize ship texture
+    SDL_Surface* temp_ship_surface = IMG_Load(SHIP_PATH);
+    SDL_Texture* ship_texture = SDL_CreateTextureFromSurface(renderer, temp_ship_surface);
+    SDL_FreeSurface(temp_ship_surface);
 
     // draw initial frame of sea texture
     SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
+    SDL_RenderPresent(renderer);
+
+    // declare initial ship position
+    SDL_Rect ship_position;
+    ship_position.x = width/2;
+    ship_position.y = height/2;
+    ship_position.w = 32;
+    ship_position.h = 32;
+
+    // draw initial frame of ship texture
+    SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);
     SDL_RenderPresent(renderer);
 
     //auto dt = 15ms;
@@ -157,18 +175,6 @@ int main(int, char **)
                     cout << "Space" << endl;
                     break;
                 }
-
-                // draw sea texture
-                SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
-                SDL_RenderPresent(renderer);
-
-
-                // clean up unused assets
-                // SDL_DestroyTexture(sea_texture);
-
-                // clear map
-                // SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-                // SDL_RenderClear(renderer);
             }
 
             // mouse events
@@ -182,10 +188,11 @@ int main(int, char **)
             }
         }
 
-        // SDL_RenderCopy(renderer, sea_texture, NULL, &sea_destination);
+        // draw textures
+        SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea texture
+        SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);  // ship texture
 
         SDL_RenderPresent(renderer); // draw frame to screen
-
         this_thread::sleep_until(current_time = current_time + dt);
     }
     SDL_DestroyRenderer(renderer);
