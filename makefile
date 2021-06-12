@@ -14,7 +14,7 @@ generate_game:
 	g++ `pkg-config --cflags sdl2` -o game.out ship_game/game.cpp `pkg-config --libs sdl2` -std=c++11
 
 install_sdl2:
-	sudo apt-get install libsdl2-dev
+	sudo apt-get install libsdl2-dev libsdl2-image-dev cmake g++
 
 clean:
 	rm *.out
