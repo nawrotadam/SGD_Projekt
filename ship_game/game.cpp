@@ -31,6 +31,8 @@ const SDL_Color font_color = {255, 255, 255};
 
 const char* SEA_PATH = "ship_game/textures/sea.png";
 const char* SHIP_PATH = "ship_game/textures/ship.png";
+const char* ISLAND_PATH = "ship_game/textures/island.png";
+const char* DEBUG_TEXTURE_PATH = "ship_game/textures/debug_texture.png";
 const char* ROBOTO_BOLD_PATH = "ship_game/fonts/Roboto-Bold.ttf";
 const char* ROBOTO_REGULAR_PATH = "ship_game/fonts/Roboto-Regular.ttf";
 const char* ROBOTO_THIN_PATH = "ship_game/fonts/Roboto-Thin.ttf";
@@ -103,20 +105,20 @@ void render_hull_text(SDL_Renderer &renderer, TTF_Font &used_font, SDL_Rect &tex
     SDL_DestroyTexture(hull_texture);
 }
 
-bool check_hull_lvl(int hull)
+bool is_ship_destroyed(int hull)
 {
-    if (hull < 0)
+    if (hull <= 0)
     {
         cout<<"Your ship has sinked"<<endl;
-        return false;
+        return true;
     } 
-    else return true;
+    else return false;
 }
 
 int main(int, char **)
 {
     int xMouse, yMouse;
-    int ship_speed = 3;
+    int ship_speed = 7;
     int hull = 100;
     
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
@@ -134,6 +136,11 @@ int main(int, char **)
     // initialize fonts
     TTF_Font * roboto_bold_font = TTF_OpenFont(ROBOTO_BOLD_PATH, 25);
 
+    // initialize debug texture
+    SDL_Surface* temp_debug_surface = IMG_Load(DEBUG_TEXTURE_PATH);
+    SDL_Texture* debug_texture = SDL_CreateTextureFromSurface(renderer, temp_debug_surface);
+    SDL_FreeSurface(temp_debug_surface);
+
     // initialize sea texture
     SDL_Surface* temp_sea_surface = IMG_Load(SEA_PATH);
     SDL_Texture* sea_texture = SDL_CreateTextureFromSurface(renderer, temp_sea_surface);
@@ -144,6 +151,11 @@ int main(int, char **)
     SDL_Texture* ship_texture = SDL_CreateTextureFromSurface(renderer, temp_ship_surface);
     SDL_FreeSurface(temp_ship_surface);
 
+    // initialize island texture
+    SDL_Surface* temp_island_surface = IMG_Load(ISLAND_PATH);
+    SDL_Texture* island_texture = SDL_CreateTextureFromSurface(renderer, temp_island_surface);
+    SDL_FreeSurface(temp_island_surface);
+
     // declare hull text position
     SDL_Rect text_position;
     text_position.x = 20;
@@ -151,21 +163,48 @@ int main(int, char **)
     text_position.w = 55;
     text_position.h = 25;
 
-    // draw initial frame of sea texture
-    SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
-
-    // draw initial frame of hull texture
-    render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));
-
     // declare initial ship position
     SDL_Rect ship_position;
     ship_position.x = width/2;
     ship_position.y = height/2;
-    ship_position.w = 32;
-    ship_position.h = 32;
+    ship_position.w = 24;
+    ship_position.h = 24;
+
+    // declare initial ship collision square possition
+    SDL_Rect ship_collision;
+    ship_collision.x = ship_position.x;
+    ship_collision.y = ship_position.y;
+    ship_collision.w = ship_position.w;
+    ship_collision.h = ship_position.h;
+
+    // declare initial island position
+    SDL_Rect island_position;
+    island_position.x = width-250;
+    island_position.y = 0;
+    island_position.w = 250;
+    island_position.h = 460;
+
+    // declare initial harbor position
+    SDL_Rect harbor_position;
+    harbor_position.x = 200;  // TODO change position to be more accurate
+    harbor_position.y = 200;  // TODO jw
+    harbor_position.w = 200;  // TODO jw
+    harbor_position.h = 200;  // TODO jw
+
+    // draw initial frame of sea texture
+    SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
+
+    // draw initial frame of island texture
+    SDL_RenderCopy(renderer, island_texture, NULL, &island_position);
+
+    // draw initial frame of hull texture
+    render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));
 
     // draw initial frame of ship texture
     SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);
+
+    // draw initial frame of ship debug texture
+    SDL_RenderCopy(renderer, debug_texture, NULL, &ship_collision);
 
     //auto dt = 15ms;
     milliseconds dt(15);
@@ -191,18 +230,22 @@ int main(int, char **)
                 case SDLK_UP:
                     cout << "Up" << endl;
                     ship_position.y -= ship_speed;
+                    ship_collision.y -= ship_speed;
                     break;
                 case SDLK_DOWN:
                     cout << "Down" << endl;
                     ship_position.y += ship_speed;
+                    ship_collision.y += ship_speed;
                     break;
                 case SDLK_LEFT:
                     cout << "Left" << endl;
                     ship_position.x -= ship_speed;
+                    ship_collision.x -= ship_speed;
                     break;
                 case SDLK_RIGHT:
                     cout << "Right" << endl;
                     ship_position.x += ship_speed;
+                    ship_collision.x += ship_speed;
                     break;
                 case SDLK_w:
                     cout << "W" << endl;
@@ -234,8 +277,14 @@ int main(int, char **)
             }
         }
 
+        // check whether ship is destroyed
+        if(is_ship_destroyed(hull))
+            break;
+
         // draw textures
         SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea
+        SDL_RenderCopy(renderer, island_texture, NULL, &island_position);  // island
+        SDL_RenderCopy(renderer, debug_texture, NULL, &ship_collision);  // ship collision debug
         SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);  // ship
         render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));  // hull text
 
