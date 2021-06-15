@@ -11,6 +11,7 @@
 #include <thread>
 #include <tuple>
 #include <vector>
+#include <stdlib.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -121,6 +122,7 @@ int main(int, char **)
     int ship_speed = 7;
     int hull = 100;
     int damage = 1;
+    bool in_harbor = false;
     
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
     errcheck(TTF_Init() != 0);
@@ -322,7 +324,7 @@ int main(int, char **)
         // draw textures
         SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea
         SDL_RenderCopy(renderer, island_texture, NULL, &island_position);  // island
-        SDL_RenderCopy(renderer, debug_texture, NULL, &ship_collision);  // ship collision debug
+        // SDL_RenderCopy(renderer, debug_texture, NULL, &ship_collision);  // ship collision debug
         SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);  // ship
         render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));  // hull text
 
@@ -345,8 +347,56 @@ int main(int, char **)
         if(SDL_HasIntersection(&ship_collision, &harbor_position))
         {
             cout<<"Harbor hitted"<<endl;
+            in_harbor = true;
         }
         
+        if(in_harbor)
+        {
+            cout<<"You have come to the Campeche city"<<endl;
+            cout<<endl;
+            cout<<"Click t to talk to city mayor"<<endl;
+            cout<<"Click r to repair hull"<<endl;
+            cout<<"Click l to leave city"<<endl;
+
+            while(in_harbor)
+            {
+                SDL_Event event;
+                while (SDL_PollEvent(&event))
+                {
+                    // quit game
+                    if (event.type == SDL_QUIT)
+                    {
+                        exit(EXIT_FAILURE);
+                    }
+
+                    if (event.type == SDL_KEYDOWN)
+                    {
+                        switch (event.key.keysym.sym)
+                        {
+                        case SDLK_t:
+                            cout<<"Hello stranger! I'm sure i haven't seen you before. Got some time to help?"<<endl;
+                            cout<<"I have been struggling with one problem and you look like the one that can manage this."<<endl;
+                            cout<<"Pirates are becoming bigger and bigger problem with time passing, they don't bother us directly but they attack merchants ships."<<endl;
+                            cout<<"If it continues we will lost all trade treaties and the city ecconomy will collapse."<<endl;
+                            cout<<"You say you are intrested? Good. Let me show where these scumbags hide..."<<endl;
+                            cout<<endl;
+                            cout<<"You got your first mission!"<<endl;
+                            break;
+                        case SDLK_r:
+                            hull = 100;
+                            cout<<"Hull repaired!"<<endl;
+                            break;
+                        case SDLK_l:
+                            ship_position.x -= 50;
+                            ship_collision.x -= 50;
+                            in_harbor = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         SDL_RenderPresent(renderer); // draw frame to screen
         this_thread::sleep_until(current_time = current_time + dt);
     }
