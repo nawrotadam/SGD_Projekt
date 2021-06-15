@@ -120,6 +120,7 @@ int main(int, char **)
     int xMouse, yMouse;
     int ship_speed = 7;
     int hull = 100;
+    int damage = 1;
     
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
     errcheck(TTF_Init() != 0);
@@ -177,19 +178,61 @@ int main(int, char **)
     ship_collision.w = ship_position.w;
     ship_collision.h = ship_position.h;
 
-    // declare initial island position
+    // declare initial whole island position
     SDL_Rect island_position;
     island_position.x = width-250;
     island_position.y = 0;
     island_position.w = 250;
     island_position.h = 460;
 
+    // declare initial island first chunk position
+    SDL_Rect island_chunk_one_position;
+    island_chunk_one_position.w = 250;
+    island_chunk_one_position.h = 92;
+    island_chunk_one_position.x = width - island_chunk_one_position.w;
+    island_chunk_one_position.y = 0;
+
+    // declare initial island second chunk position
+    SDL_Rect island_chunk_two_position;
+    island_chunk_two_position.w = 122;
+    island_chunk_two_position.h = 78;
+    island_chunk_two_position.x = width - island_chunk_two_position.w;
+    island_chunk_two_position.y = 92;
+
+    // declare initial island third chunk position
+    SDL_Rect island_chunk_three_position;
+    island_chunk_three_position.w = 190;
+    island_chunk_three_position.h = 89;
+    island_chunk_three_position.x = width - island_chunk_three_position.w;
+    island_chunk_three_position.y = 170;
+
+    // declare initial island fourth chunk position
+    SDL_Rect island_chunk_four_position;
+    island_chunk_four_position.w = 122;
+    island_chunk_four_position.h = 57;
+    island_chunk_four_position.x = width - island_chunk_four_position.w;
+    island_chunk_four_position.y = 259;
+
+    // declare initial island fifth chunk position
+    SDL_Rect island_chunk_five_position;
+    island_chunk_five_position.w = 82;
+    island_chunk_five_position.h = 77;
+    island_chunk_five_position.x = width-island_chunk_five_position.w;
+    island_chunk_five_position.y = 316;
+
+    // declare initial island sixth chunk position
+    SDL_Rect island_chunk_six_position;
+    island_chunk_six_position.w = 167;
+    island_chunk_six_position.h = 67;
+    island_chunk_six_position.x = width-island_chunk_six_position.w;
+    island_chunk_six_position.y = 393;
+
     // declare initial harbor position
     SDL_Rect harbor_position;
-    harbor_position.x = 200;  // TODO change position to be more accurate
-    harbor_position.y = 200;  // TODO jw
-    harbor_position.w = 200;  // TODO jw
-    harbor_position.h = 200;  // TODO jw
+    harbor_position.w = 41;
+    harbor_position.h = 78;
+    harbor_position.x = island_chunk_two_position.x - harbor_position.w;
+    harbor_position.y = island_chunk_two_position.y;
 
     // draw initial frame of sea texture
     SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
@@ -228,39 +271,34 @@ int main(int, char **)
                 switch (event.key.keysym.sym)
                 {
                 case SDLK_UP:
-                    cout << "Up" << endl;
                     ship_position.y -= ship_speed;
                     ship_collision.y -= ship_speed;
                     break;
                 case SDLK_DOWN:
-                    cout << "Down" << endl;
                     ship_position.y += ship_speed;
                     ship_collision.y += ship_speed;
                     break;
                 case SDLK_LEFT:
-                    cout << "Left" << endl;
                     ship_position.x -= ship_speed;
                     ship_collision.x -= ship_speed;
                     break;
                 case SDLK_RIGHT:
-                    cout << "Right" << endl;
                     ship_position.x += ship_speed;
                     ship_collision.x += ship_speed;
                     break;
                 case SDLK_w:
-                    cout << "W" << endl;
+                    ;
                     break;
                 case SDLK_s:
-                    cout << "S" << endl;
+                    ;
                     break;
                 case SDLK_a:
-                    cout << "A" << endl;
+                    ;
                     break;
                 case SDLK_d:
-                    cout << "D" << endl;
+                    ;
                     break;
                 case SDLK_SPACE:
-                    cout << "Space" << endl;
                     hull -= 10;  // TODO debug only, change it later
                     break;
                 }
@@ -269,11 +307,11 @@ int main(int, char **)
             // mouse events
             if (event.type == SDL_MOUSEMOTION && event.button.button == SDL_BUTTON(SDL_BUTTON_LEFT))
             {
-                cout << "Left mouse button" << endl;
+                ;
             }
             if (event.type == SDL_MOUSEMOTION && event.button.button == SDL_BUTTON(SDL_BUTTON_RIGHT))
             {
-                cout << "Right mouse button" << endl;
+                ;
             }
         }
 
@@ -288,6 +326,27 @@ int main(int, char **)
         SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);  // ship
         render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));  // hull text
 
+        // debug
+        SDL_RenderCopy(renderer, debug_texture, NULL, &harbor_position);
+
+        // collision with islands
+        if(SDL_HasIntersection(&ship_collision, &island_chunk_one_position) || 
+        SDL_HasIntersection(&ship_collision, &island_chunk_two_position) ||
+        SDL_HasIntersection(&ship_collision, &island_chunk_three_position) ||
+        SDL_HasIntersection(&ship_collision, &island_chunk_four_position) ||
+        SDL_HasIntersection(&ship_collision, &island_chunk_five_position) ||
+        SDL_HasIntersection(&ship_collision, &island_chunk_six_position))
+        {
+            cout<<"Island hitted"<<endl;
+            hull -= damage;
+        }
+
+        // collision with harbor
+        if(SDL_HasIntersection(&ship_collision, &harbor_position))
+        {
+            cout<<"Harbor hitted"<<endl;
+        }
+        
         SDL_RenderPresent(renderer); // draw frame to screen
         this_thread::sleep_until(current_time = current_time + dt);
     }
