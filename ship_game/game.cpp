@@ -13,6 +13,8 @@
 #include <vector>
 #include <stdlib.h>
 
+#include "game.hpp"
+
 using namespace std;
 using namespace std::chrono;
 
@@ -28,7 +30,6 @@ using namespace std::chrono;
 
 const int width = 680;
 const int height = 460;
-const SDL_Color font_color = {255, 255, 255};
 
 const char* SEA_PATH = "ship_game/textures/sea.png";
 const char* SHIP_PATH = "ship_game/textures/ship.png";
@@ -38,83 +39,6 @@ const char* ROBOTO_BOLD_PATH = "ship_game/fonts/Roboto-Bold.ttf";
 const char* ROBOTO_REGULAR_PATH = "ship_game/fonts/Roboto-Regular.ttf";
 const char* ROBOTO_THIN_PATH = "ship_game/fonts/Roboto-Thin.ttf";
 
-class Ship {
-private:
-    SDL_Point position;
-    float dx, dy;  // velocity
-public:
-    Ship(SDL_Point position, double dx, double dy) {
-        this->position = position;
-        this->dx = dx;
-        this->dy = dy;
-    }
-
-    SDL_Point getPosition() {
-        return position;
-    }
-
-    void setPosition(SDL_Point position) {
-        this->position = position;
-    }
-
-    double getVelocityX() {
-        return dx;
-    }
-
-    double setVelocityX(double dx) {
-        this->dx = dx;
-    }
-
-    double getVelocityY() {
-        return dy;
-    }
-
-    double setVelocityY(double dy) {
-        this->dy = dy;
-    }
-};
-
-SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
-{
-    double pi = acos(-1);
-    double rotation_angle = (double)angle / 180.0 * pi;
-    double s = sin(rotation_angle);
-    double c = cos(rotation_angle);
-
-    // translate point back to origin:
-    p.x -= cx;
-    p.y -= cy;
-
-    // rotate point
-    double xnew = p.x * c - p.y * s;
-    double ynew = p.x * s + p.y * c;
-
-    // translate point back:
-    p.x = xnew + cx;
-    p.y = ynew + cy;
-
-    return p;
-}
-
-void render_hull_text(SDL_Renderer &renderer, TTF_Font &used_font, SDL_Rect &text_position, string text)
-{
-    SDL_Surface * hull_surface = TTF_RenderText_Solid(&used_font, text.c_str(), font_color);
-    SDL_Texture * hull_texture = SDL_CreateTextureFromSurface(&renderer, hull_surface);
-    SDL_FreeSurface(hull_surface);
-
-    SDL_RenderCopy(&renderer, hull_texture, NULL, &text_position);  // draw texture on screen
-    SDL_DestroyTexture(hull_texture);
-}
-
-bool is_ship_destroyed(int hull)
-{
-    if (hull <= 0)
-    {
-        cout<<"Your ship has sinked"<<endl;
-        return true;
-    } 
-    else return false;
-}
 
 int main(int, char **)
 {
@@ -123,6 +47,9 @@ int main(int, char **)
     int hull = 100;
     int damage = 1;
     bool in_harbor = false;
+    vector<Bullet> bullets;
+    int bullet_size_w = 10;
+    int bullet_size_h = 10;
     
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
     errcheck(TTF_Init() != 0);
@@ -301,7 +228,11 @@ int main(int, char **)
                     ;
                     break;
                 case SDLK_SPACE:
-                    hull -= 10;  // TODO debug only, change it later
+                    SDL_Rect bullet_pos = {ship_position.x, ship_position.y, bullet_size_w, bullet_size_h};
+                    float bullet_speed_x = -10;
+                    float bullet_speed_y = 3;
+                    Bullet new_bullet(bullet_pos, bullet_speed_x, bullet_speed_y);
+                    bullets.push_back(new_bullet);
                     break;
                 }
             }
@@ -396,6 +327,14 @@ int main(int, char **)
                 }
             }
         }
+
+        // update objects
+        for(auto& el: bullets)
+            el.Update();
+
+        // draw bullets
+        for(auto el: bullets)
+            SDL_RenderCopy(renderer, debug_texture, NULL, &el.get_pos());
 
         SDL_RenderPresent(renderer); // draw frame to screen
         this_thread::sleep_until(current_time = current_time + dt);
