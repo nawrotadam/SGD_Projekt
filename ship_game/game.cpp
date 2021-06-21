@@ -43,7 +43,8 @@ const char* ROBOTO_THIN_PATH = "ship_game/fonts/Roboto-Thin.ttf";
 int main(int, char **)
 {
     int xMouse, yMouse;
-    int ship_speed = 7;
+    double ship_speed_x = 7;
+    double ship_speed_y = 7;
     int hull = 100;
     int damage = 1;
     bool in_harbor = false;
@@ -64,7 +65,7 @@ int main(int, char **)
     errcheck(renderer == nullptr);
 
     // initialize fonts
-    TTF_Font * roboto_bold_font = TTF_OpenFont(ROBOTO_BOLD_PATH, 25);
+    TTF_Font* roboto_bold_font = TTF_OpenFont(ROBOTO_BOLD_PATH, 25);
 
     // initialize debug texture
     SDL_Surface* temp_debug_surface = IMG_Load(DEBUG_TEXTURE_PATH);
@@ -87,96 +88,27 @@ int main(int, char **)
     SDL_FreeSurface(temp_island_surface);
 
     // declare hull text position
-    SDL_Rect text_position;
-    text_position.x = 20;
-    text_position.y = 10;
-    text_position.w = 55;
-    text_position.h = 25;
+    SDL_Rect text_position = {20, 10, 55, 25};
 
-    // declare initial ship position
-    SDL_Rect ship_position;
-    ship_position.x = width/2;
-    ship_position.y = height/2;
-    ship_position.w = 24;
-    ship_position.h = 24;
+    // declare initial whole island position - used to draw its texture
+    SDL_Rect island_position = {width-250, 0, 250, 460};
 
-    // declare initial ship collision square possition
-    SDL_Rect ship_collision;
-    ship_collision.x = ship_position.x;
-    ship_collision.y = ship_position.y;
-    ship_collision.w = ship_position.w;
-    ship_collision.h = ship_position.h;
-
-    // declare initial whole island position
-    SDL_Rect island_position;
-    island_position.x = width-250;
-    island_position.y = 0;
-    island_position.w = 250;
-    island_position.h = 460;
-
-    // declare initial island first chunk position
-    SDL_Rect island_chunk_one_position;
-    island_chunk_one_position.w = 250;
-    island_chunk_one_position.h = 92;
-    island_chunk_one_position.x = width - island_chunk_one_position.w;
-    island_chunk_one_position.y = 0;
-
-    // declare initial island second chunk position
-    SDL_Rect island_chunk_two_position;
-    island_chunk_two_position.w = 122;
-    island_chunk_two_position.h = 78;
-    island_chunk_two_position.x = width - island_chunk_two_position.w;
-    island_chunk_two_position.y = 92;
-
-    // declare initial island third chunk position
-    SDL_Rect island_chunk_three_position;
-    island_chunk_three_position.w = 190;
-    island_chunk_three_position.h = 89;
-    island_chunk_three_position.x = width - island_chunk_three_position.w;
-    island_chunk_three_position.y = 170;
-
-    // declare initial island fourth chunk position
-    SDL_Rect island_chunk_four_position;
-    island_chunk_four_position.w = 122;
-    island_chunk_four_position.h = 57;
-    island_chunk_four_position.x = width - island_chunk_four_position.w;
-    island_chunk_four_position.y = 259;
-
-    // declare initial island fifth chunk position
-    SDL_Rect island_chunk_five_position;
-    island_chunk_five_position.w = 82;
-    island_chunk_five_position.h = 77;
-    island_chunk_five_position.x = width-island_chunk_five_position.w;
-    island_chunk_five_position.y = 316;
-
-    // declare initial island sixth chunk position
-    SDL_Rect island_chunk_six_position;
-    island_chunk_six_position.w = 167;
-    island_chunk_six_position.h = 67;
-    island_chunk_six_position.x = width-island_chunk_six_position.w;
-    island_chunk_six_position.y = 393;
+    // declare island chunks position - used for collision
+    SDL_Rect island_chunk_one_position = {width - island_chunk_one_position.w, 0, 250, 92};
+    SDL_Rect island_chunk_two_position = {width - island_chunk_two_position.w, 92, 122, 78};
+    SDL_Rect island_chunk_three_position = {width - island_chunk_three_position.w, 170, 190, 89};
+    SDL_Rect island_chunk_four_position = {width - island_chunk_four_position.w, 259, 122, 57};
+    SDL_Rect island_chunk_five_position = {width-island_chunk_five_position.w, 316, 82, 77};
+    SDL_Rect island_chunk_six_position = {width-island_chunk_six_position.w, 393, 167, 67};
 
     // declare initial harbor position
-    SDL_Rect harbor_position;
-    harbor_position.w = 41;
-    harbor_position.h = 78;
-    harbor_position.x = island_chunk_two_position.x - harbor_position.w;
-    harbor_position.y = island_chunk_two_position.y;
+    SDL_Rect harbor_position = {island_chunk_two_position.x - harbor_position.w, 92, 41, 78};
 
-    // draw initial frame of sea texture
-    SDL_RenderCopy(renderer, sea_texture, NULL, NULL);
+    // declare initial ship position
+    SDL_Rect ship_position = {width/2, height/2, 24, 24};
 
-    // draw initial frame of island texture
-    SDL_RenderCopy(renderer, island_texture, NULL, &island_position);
-
-    // draw initial frame of hull texture
-    render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));
-
-    // draw initial frame of ship texture
-    SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);
-
-    // draw initial frame of ship debug texture
-    SDL_RenderCopy(renderer, debug_texture, NULL, &ship_collision);
+    // initialize ship object
+    Ship ship(ship_position, ship_speed_x, ship_speed_y);
 
     //auto dt = 15ms;
     milliseconds dt(15);
@@ -200,32 +132,28 @@ int main(int, char **)
                 switch (event.key.keysym.sym)
                 {
                 case SDLK_UP:
-                    ship_position.y -= ship_speed;
-                    ship_collision.y -= ship_speed;
+                    ship.move(0, -ship_speed_y);      
                     break;
                 case SDLK_DOWN:
-                    ship_position.y += ship_speed;
-                    ship_collision.y += ship_speed;
+                    ship.move(0, +ship_speed_y);   
                     break;
                 case SDLK_LEFT:
-                    ship_position.x -= ship_speed;
-                    ship_collision.x -= ship_speed;
+                    ship.move(-ship_speed_x, 0);   
                     break;
                 case SDLK_RIGHT:
-                    ship_position.x += ship_speed;
-                    ship_collision.x += ship_speed;
+                    ship.move(+ship_speed_x, 0);   
                     break;
                 case SDLK_w:
-                    ;
+                    ship.move(0, -ship_speed_y);  
                     break;
                 case SDLK_s:
-                    ;
+                    ship.move(0, +ship_speed_y); 
                     break;
                 case SDLK_a:
-                    ;
+                    ship.move(-ship_speed_x, 0);   
                     break;
                 case SDLK_d:
-                    ;
+                    ship.move(+ship_speed_x, 0); 
                     break;
                 case SDLK_SPACE:
                     SDL_Rect bullet_pos = {ship_position.x, ship_position.y, bullet_size_w, bullet_size_h};
@@ -252,30 +180,23 @@ int main(int, char **)
         if(is_ship_destroyed(hull))
             break;
 
-        // draw textures
-        SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea
-        SDL_RenderCopy(renderer, island_texture, NULL, &island_position);  // island
-        // SDL_RenderCopy(renderer, debug_texture, NULL, &ship_collision);  // ship collision debug
-        SDL_RenderCopy(renderer, ship_texture, NULL, &ship_position);  // ship
-        render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));  // hull text
-
-        // debug
-        SDL_RenderCopy(renderer, debug_texture, NULL, &harbor_position);
+        // pos stored in variable to avoid multiple calls to position getter
+        auto ship_pos = ship.get_position();
 
         // collision with islands
-        if(SDL_HasIntersection(&ship_collision, &island_chunk_one_position) || 
-        SDL_HasIntersection(&ship_collision, &island_chunk_two_position) ||
-        SDL_HasIntersection(&ship_collision, &island_chunk_three_position) ||
-        SDL_HasIntersection(&ship_collision, &island_chunk_four_position) ||
-        SDL_HasIntersection(&ship_collision, &island_chunk_five_position) ||
-        SDL_HasIntersection(&ship_collision, &island_chunk_six_position))
+        if(SDL_HasIntersection(&ship_pos, &island_chunk_one_position) || 
+        SDL_HasIntersection(&ship_pos, &island_chunk_two_position) ||
+        SDL_HasIntersection(&ship_pos, &island_chunk_three_position) ||
+        SDL_HasIntersection(&ship_pos, &island_chunk_four_position) ||
+        SDL_HasIntersection(&ship_pos, &island_chunk_five_position) ||
+        SDL_HasIntersection(&ship_pos, &island_chunk_six_position))
         {
             cout<<"Island hitted"<<endl;
             hull -= damage;
         }
 
         // collision with harbor
-        if(SDL_HasIntersection(&ship_collision, &harbor_position))
+        if(SDL_HasIntersection(&ship_pos, &harbor_position))
         {
             cout<<"Harbor hitted"<<endl;
             in_harbor = true;
@@ -318,8 +239,7 @@ int main(int, char **)
                             cout<<"Hull repaired!"<<endl;
                             break;
                         case SDLK_l:
-                            ship_position.x -= 50;
-                            ship_collision.x -= 50;
+                            ship.move(-ship_speed_x, 0);   
                             in_harbor = false;
                             break;
                         }
@@ -327,6 +247,12 @@ int main(int, char **)
                 }
             }
         }
+
+        // draw textures
+        SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea
+        SDL_RenderCopy(renderer, island_texture, NULL, &island_position);  // island
+        SDL_RenderCopy(renderer, ship_texture, NULL, &ship_pos);  // ship
+        render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));  // hull text
 
         // update objects
         for(auto& el: bullets)

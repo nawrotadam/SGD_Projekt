@@ -12,15 +12,15 @@ private:
     SDL_Rect position;
     float dx, dy;  // velocity
 public:
-    Bullet(SDL_Rect position, double dx, double dy) {
-        this->position = position;
-        this->dx = dx;
-        this->dy = dy;
+    Bullet(SDL_Rect position_, double dx_, double dy_) {
+        position = position_;
+        dx = dx_;
+        dy = dy_;
     }
 
     void Update() {
-        this->position.x += dx;
-        this->position.y += dy;
+        position.x += dx;
+        position.y += dy;
     }
 
     SDL_Rect& get_pos() {
@@ -28,43 +28,28 @@ public:
     }
 };
 
-
 class Ship {
 private:
-    SDL_Point position;
-    float dx, dy;  // velocity
+    double dx, dy;  // velocity
+    SDL_Rect position;
 public:
-    Ship(SDL_Point position, double dx, double dy) {
-        this->position = position;
-        this->dx = dx;
-        this->dy = dy;
+    Ship(SDL_Rect position_, double dx_, double dy_) {
+        position = position_;
+        dx = dx_;
+        dy = dy_;
     }
 
-    SDL_Point getPosition() {
+    void move(double dx_, double dy_)
+    {
+        position.x += dx_;
+        position.y += dy_;
+    }
+
+    SDL_Rect& get_position()
+    {
         return position;
     }
-
-    void setPosition(SDL_Point position) {
-        this->position = position;
-    }
-
-    double getVelocityX() {
-        return dx;
-    }
-
-    double setVelocityX(double dx) {
-        this->dx = dx;
-    }
-
-    double getVelocityY() {
-        return dy;
-    }
-
-    double setVelocityY(double dy) {
-        this->dy = dy;
-    }
 };
-
 
 SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
 {
@@ -97,7 +82,6 @@ bool is_ship_destroyed(int hull)
     } 
     else return false;
 }
-
 
 void render_hull_text(SDL_Renderer &renderer, TTF_Font &used_font, SDL_Rect &text_position, string text)
 {
