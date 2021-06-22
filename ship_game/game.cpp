@@ -250,13 +250,6 @@ int main(int, char **)
         if(in_harbor)
         {
             shown_dialogs = city_visited_dialog;  // write city dialog on screen
-
-            cout<<"You have come to the Campeche city"<<endl;
-            cout<<endl;
-            cout<<"Click t to talk to city mayor"<<endl;
-            cout<<"Click r to repair hull"<<endl;
-            cout<<"Click l to leave city"<<endl;
-
             while(in_harbor)
             {
                 SDL_Event event;
@@ -274,22 +267,11 @@ int main(int, char **)
                         {
                         case SDLK_t:
                             shown_dialogs = city_mayor_dialog;  // write dialog with mayor on screen
-
-                            cout<<"Hello stranger! I'm sure i haven't seen you before. Got some time to help?"<<endl;
-                            cout<<"I have been struggling with one problem and you look like the one that can manage this."<<endl;
-                            cout<<"Pirates are becoming bigger and bigger problem with time passing, they don't bother us directly but they attack merchants ships."<<endl;
-                            cout<<"If it continues we will lost all trade treaties and the city ecconomy will collapse."<<endl;
-                            cout<<"You say you are intrested? Good. Let me show where these scumbags hide..."<<endl;
-                            cout<<endl;
-                            cout<<"You got your first mission!"<<endl;
                             break;
                         case SDLK_r:
                             ship.set_hull(100);
-
                             shown_dialogs.empty();
                             shown_dialogs.push_back(hull_repaired_dialog);
-
-                            cout<<"Hull repaired!"<<endl;
                             break;
                         case SDLK_l:
                             ship.move(-ship_speed_x, 0);   
@@ -298,15 +280,21 @@ int main(int, char **)
                         }
                     }
                 }
+
+            SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea
+            SDL_RenderCopy(renderer, island_texture, NULL, &island_position);  // island
+            SDL_RenderCopy(renderer, ship_texture, NULL, &ship_pos);  // ship
             // print dialogs to diary
             for(string el: shown_dialogs)
             {
                 render_text(*renderer, *roboto_bold_font, 20, diary_pos_y, el);
                 diary_pos_y += 30;
-                cout<<diary_pos_y<<endl;
             }
             diary_pos_y = 20;  // reassign old diary_pos_y value
+            SDL_RenderPresent(renderer); // draw frame to screen
             }
+
+        shown_dialogs.clear();
         }
 
         // declare hull text position
