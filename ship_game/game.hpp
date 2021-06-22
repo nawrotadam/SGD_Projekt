@@ -32,11 +32,13 @@ class Ship {
 private:
     double dx, dy;  // velocity
     SDL_Rect position;
+    int hull;
 public:
     Ship(SDL_Rect position_, double dx_, double dy_) {
         position = position_;
         dx = dx_;
         dy = dy_;
+        hull = 100;
     }
 
     void move(double dx_, double dy_)
@@ -48,6 +50,26 @@ public:
     SDL_Rect& get_position()
     {
         return position;
+    }
+
+    int get_hull()
+    {
+        return hull;
+    }
+
+    void set_hull(int hull_)
+    {
+        hull = hull_;
+    }
+
+    bool is_ship_destroyed()
+    {
+        if (hull <= 0)
+        {
+            cout<<"Your ship has sinked"<<endl;
+            return true;
+        } 
+        else return false;
     }
 };
 
@@ -73,25 +95,20 @@ SDL_Point rotate_point(double cx, double cy, double angle, SDL_Point p)
     return p;
 }
 
-bool is_ship_destroyed(int hull)
-{
-    if (hull <= 0)
-    {
-        cout<<"Your ship has sinked"<<endl;
-        return true;
-    } 
-    else return false;
-}
-
-void render_hull_text(SDL_Renderer &renderer, TTF_Font &used_font, SDL_Rect &text_position, string text)
+void render_text(SDL_Renderer &renderer, TTF_Font &used_font, int text_position_x, int text_position_y, string text)
 {
     const SDL_Color font_color = {255, 255, 255};
-    SDL_Surface * hull_surface = TTF_RenderText_Solid(&used_font, text.c_str(), font_color);
-    SDL_Texture * hull_texture = SDL_CreateTextureFromSurface(&renderer, hull_surface);
-    SDL_FreeSurface(hull_surface);
+    SDL_Surface * surface = TTF_RenderText_Solid(&used_font, text.c_str(), font_color);
+    SDL_Texture * texture = SDL_CreateTextureFromSurface(&renderer, surface);
+    SDL_FreeSurface(surface);
 
-    SDL_RenderCopy(&renderer, hull_texture, NULL, &text_position);  // draw texture on screen
-    SDL_DestroyTexture(hull_texture);
+    int texW = 0;
+    int texH = 0;
+    SDL_QueryTexture(texture, NULL, NULL, &texW, &texH);
+    SDL_Rect text_position = {text_position_x, text_position_y, texW, texH};
+
+    SDL_RenderCopy(&renderer, texture, NULL, &text_position);  // draw texture on screen
+    SDL_DestroyTexture(texture);
 }
 
 #endif

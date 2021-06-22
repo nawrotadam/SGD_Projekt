@@ -30,6 +30,8 @@ using namespace std::chrono;
 
 const int width = 680;
 const int height = 460;
+const int bullet_size_w = 10;
+const int bullet_size_h = 10;
 
 const char* SEA_PATH = "ship_game/textures/sea.png";
 const char* SHIP_PATH = "ship_game/textures/ship.png";
@@ -39,18 +41,56 @@ const char* ROBOTO_BOLD_PATH = "ship_game/fonts/Roboto-Bold.ttf";
 const char* ROBOTO_REGULAR_PATH = "ship_game/fonts/Roboto-Regular.ttf";
 const char* ROBOTO_THIN_PATH = "ship_game/fonts/Roboto-Thin.ttf";
 
+vector<string> shown_dialogs;
+vector<string> city_visited_dialog = {
+"You have come to the Campeche city", 
+"Click t to talk to city mayor",
+"Click r to repair hull",
+"Click l to leave city"
+};
+vector<string> city_mayor_dialog = {
+    "Hello stranger! I'm sure i haven't seen you before. Got some time to help?",
+    "I have been struggling with one problem and you look like the one that can manage this.",
+    "Pirates are becoming bigger and bigger problem with time passing, they don't bother us directly but they attack merchants ships.",
+    "If it continues we will lost all trade treaties and the city ecconomy will collapse.",
+    "You say you are intrested? Good. Let me show where these scumbags hide...",
+    "",
+    "You got your first mission!"
+};
+string hull_repaired_dialog = "Hull repaired!";
+
+
+Bullet create_bullet(Ship& ship, float bullet_speed_x, float bullet_speed_y)
+{
+    SDL_Rect bullet_pos = {ship.get_position().x, ship.get_position().y, bullet_size_w, bullet_size_h};
+    Bullet new_bullet(bullet_pos, bullet_speed_x, bullet_speed_y);
+    return new_bullet;
+}
+
+void destroy_out_of_screen_bullets(vector<Bullet> bullets)
+{
+    int counter = 0;
+    for(auto& el: bullets)
+    {
+        if(el.get_pos().x < 0 || el.get_pos().x > width || el.get_pos().y < 0 || el.get_pos().y > height)
+        {
+            bullets.erase(bullets.begin() + counter);
+        }
+        counter++;
+    }
+}
 
 int main(int, char **)
 {
     int xMouse, yMouse;
     double ship_speed_x = 7;
     double ship_speed_y = 7;
-    int hull = 100;
+    float bullet_speed_x = 10;
+    float bullet_speed_y = 0;
     int damage = 1;
     bool in_harbor = false;
     vector<Bullet> bullets;
-    int bullet_size_w = 10;
-    int bullet_size_h = 10;
+    int diary_pos_y = 10;
     
     errcheck(SDL_Init(SDL_INIT_VIDEO) != 0);
     errcheck(TTF_Init() != 0);
@@ -86,9 +126,6 @@ int main(int, char **)
     SDL_Surface* temp_island_surface = IMG_Load(ISLAND_PATH);
     SDL_Texture* island_texture = SDL_CreateTextureFromSurface(renderer, temp_island_surface);
     SDL_FreeSurface(temp_island_surface);
-
-    // declare hull text position
-    SDL_Rect text_position = {20, 10, 55, 25};
 
     // declare initial whole island position - used to draw its texture
     SDL_Rect island_position = {width-250, 0, 250, 460};
@@ -144,23 +181,31 @@ int main(int, char **)
                     ship.move(+ship_speed_x, 0);   
                     break;
                 case SDLK_w:
-                    ship.move(0, -ship_speed_y);  
+                    bullets.push_back(create_bullet(ship, 0, -10));
                     break;
                 case SDLK_s:
-                    ship.move(0, +ship_speed_y); 
+                    bullets.push_back(create_bullet(ship, 0, 10));
                     break;
                 case SDLK_a:
-                    ship.move(-ship_speed_x, 0);   
+                    bullets.push_back(create_bullet(ship, -10, 0));
                     break;
                 case SDLK_d:
-                    ship.move(+ship_speed_x, 0); 
+                    bullets.push_back(create_bullet(ship, 10, 0));
+                    break;
+                case SDLK_q:
+                    bullets.push_back(create_bullet(ship, -5, -5));
+                    break;
+                case SDLK_e:
+                    bullets.push_back(create_bullet(ship, 5, -5));
+                    break;
+                case SDLK_z:
+                    bullets.push_back(create_bullet(ship, -5, 5));
+                    break;
+                case SDLK_x:
+                    bullets.push_back(create_bullet(ship, 5, 5));
                     break;
                 case SDLK_SPACE:
-                    SDL_Rect bullet_pos = {ship_position.x, ship_position.y, bullet_size_w, bullet_size_h};
-                    float bullet_speed_x = -10;
-                    float bullet_speed_y = 3;
-                    Bullet new_bullet(bullet_pos, bullet_speed_x, bullet_speed_y);
-                    bullets.push_back(new_bullet);
+                    bullets.push_back(create_bullet(ship, bullet_speed_x, bullet_speed_y));
                     break;
                 }
             }
@@ -177,8 +222,10 @@ int main(int, char **)
         }
 
         // check whether ship is destroyed
-        if(is_ship_destroyed(hull))
+        if(ship.is_ship_destroyed())
             break;
+
+        destroy_out_of_screen_bullets(bullets);
 
         // pos stored in variable to avoid multiple calls to position getter
         auto ship_pos = ship.get_position();
@@ -191,19 +238,19 @@ int main(int, char **)
         SDL_HasIntersection(&ship_pos, &island_chunk_five_position) ||
         SDL_HasIntersection(&ship_pos, &island_chunk_six_position))
         {
-            cout<<"Island hitted"<<endl;
-            hull -= damage;
+            ship.set_hull(ship.get_hull() - damage);
         }
 
         // collision with harbor
         if(SDL_HasIntersection(&ship_pos, &harbor_position))
         {
-            cout<<"Harbor hitted"<<endl;
             in_harbor = true;
         }
         
         if(in_harbor)
         {
+            shown_dialogs = city_visited_dialog;  // write city dialog on screen
+
             cout<<"You have come to the Campeche city"<<endl;
             cout<<endl;
             cout<<"Click t to talk to city mayor"<<endl;
@@ -226,6 +273,8 @@ int main(int, char **)
                         switch (event.key.keysym.sym)
                         {
                         case SDLK_t:
+                            shown_dialogs = city_mayor_dialog;  // write dialog with mayor on screen
+
                             cout<<"Hello stranger! I'm sure i haven't seen you before. Got some time to help?"<<endl;
                             cout<<"I have been struggling with one problem and you look like the one that can manage this."<<endl;
                             cout<<"Pirates are becoming bigger and bigger problem with time passing, they don't bother us directly but they attack merchants ships."<<endl;
@@ -235,7 +284,11 @@ int main(int, char **)
                             cout<<"You got your first mission!"<<endl;
                             break;
                         case SDLK_r:
-                            hull = 100;
+                            ship.set_hull(100);
+
+                            shown_dialogs.empty();
+                            shown_dialogs.push_back(hull_repaired_dialog);
+
                             cout<<"Hull repaired!"<<endl;
                             break;
                         case SDLK_l:
@@ -245,14 +298,33 @@ int main(int, char **)
                         }
                     }
                 }
+            // print dialogs to diary
+            for(string el: shown_dialogs)
+            {
+                render_text(*renderer, *roboto_bold_font, 20, diary_pos_y, el);
+                diary_pos_y += 30;
+                cout<<diary_pos_y<<endl;
+            }
+            diary_pos_y = 20;  // reassign old diary_pos_y value
             }
         }
+
+        // declare hull text position
+        SDL_Rect text_position = {20, height-35, 75, 25};
 
         // draw textures
         SDL_RenderCopy(renderer, sea_texture, NULL, NULL);  // sea
         SDL_RenderCopy(renderer, island_texture, NULL, &island_position);  // island
         SDL_RenderCopy(renderer, ship_texture, NULL, &ship_pos);  // ship
-        render_hull_text(*renderer, *roboto_bold_font, text_position, "Hull: " + to_string(hull));  // hull text
+        render_text(*renderer, *roboto_bold_font, text_position.x, text_position.y, "Hull: " + to_string(ship.get_hull()));  // hull text
+
+        // print dialogs to diary
+        for(string el: shown_dialogs)
+        {
+            render_text(*renderer, *roboto_bold_font, 20, diary_pos_y, el);
+            diary_pos_y += 30;
+        }
+        diary_pos_y = 20;  // reassign old diary_pos_y value
 
         // update objects
         for(auto& el: bullets)
